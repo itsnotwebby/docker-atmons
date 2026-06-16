@@ -3,7 +3,8 @@ name: Docker Hub Image Deploy
 on:
   push:
     branches: ["main"]
-
+  workflow_dispatch:
+  
 jobs:
   docker-image:
     runs-on: ubuntu-latest
