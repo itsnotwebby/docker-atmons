@@ -4,7 +4,7 @@ FROM eclipse-temurin:21-jdk
 
 LABEL maintainer="itsnotwebby"
 LABEL modpack="All the Mons"
-LABEL version="1.0.0-rc.6"
+LABEL version="1.0.0-rc.7"
 LABEL description="Docker container for running the All the Mons Minecraft server on Unraid"
 
 # Install required tools and clean up apt cache
