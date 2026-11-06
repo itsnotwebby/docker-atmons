@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # needed to trigger the Docker Hub deploy workflow
 
 jobs:
   update-mod:
@@ -15,14 +16,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Update launch.sh to latest ServerFiles
         env:
@@ -35,15 +36,26 @@ jobs:
           node fetch_latest_server_files.js
 
       - name: Commit and push changes (if any)
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           if git diff --quiet; then
             echo "No changes to commit."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          git add launch.sh
+          git add launch.sh Dockerfile
           git commit -m "chore: bump ServerFiles to latest (CurseForge)"
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # Pushes made with GITHUB_TOKEN don't trigger other workflows' `push`
+      # events, so explicitly dispatch the Docker Hub build after a bump.
+      - name: Trigger Docker Hub image build
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run docker-hub.yml --ref main
